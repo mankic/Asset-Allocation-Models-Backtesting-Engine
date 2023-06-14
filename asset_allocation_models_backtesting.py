@@ -251,5 +251,58 @@ class AssetAllocationBacktesting:
         cost_df.fillna(0, inplace=True)
         
         return cost_df
+    
+    def run(self, cs_model, ts_model, cost):
+        """
+        Execute portfolio backtesting.
+        :param cs_model: Choose the asset allocation model you want.
+        :param ts_model: Choose the portfolio weights model you want.
+        :param cost: Transaction cost you have to pay.
+        :return: [port_weights, port_asset_rets, port_rets]
+        """
+        backtest_dict = {}
+        rets = self.rets
+        
+        # Execute the selected asset allocation model.
+        for i, index in enumerate(rets.index[self.period - 1:]):
+            if cs_model == 'EW':
+                backtest_dict[index] = self.CrossSectional().ew(self.er[i])
+            elif cs_model == 'MSR':
+                backtest_dict[index] = self.CrossSectional().msr(self.er[i], self.cov[i])
+            elif cs_model == 'GMV':
+                backtest_dict[index] = self.CrossSectional().gmv(self.cov[i])
+            elif cs_model == 'MDP':
+                backtest_dict[index] = self.CrossSectional().mdp(self.vol[i], self.cov[i])
+            elif cs_model == 'RP':
+                backtest_dict[index] = self.CrossSectional().rp(self.cov[i])
+            elif cs_model == 'EMV':
+                backtest_dict[index] = self.CrossSectional().emv(self.vol[i])
+        
+        cs_weights = pd.DataFrame(list(backtest_dict.values()), index=backtest_dict.keys(), columns=rets.columns)
+        cs_weights.fillna(0, inplace=True)
+        
+        cs_rets = cs_weights.shift() * rets.iloc[self.period - 1:, :]
+        cs_port_rets = cs_rets.sum(axis=1)
+        
+        # Execute the selected portfolio weight model.
+        if ts_model == 'VT':
+            ts_weights = (self.PortRiskFreeWeights().vt(cs_port_rets, self.period))
+        elif ts_model == 'CVT':
+            ts_weights = (self.PortRiskFreeWeights().cvt(cs_port_rets, self.period))
+        elif ts_model == None:
+            ts_weights = 1
+        
+        # Portfolio investment weights
+        port_weights = cs_weight.multiply(ts_weights, axis=0)
+        
+        # Transaction cost
+        cost = self.transaction_cost(port_weights, rets)
+        
+        # Portfolio Returns
+        port_asset_rets = port_weights.shift() * rets - cost
+        port_rets = port_asset_rets.sum(axis=1)
+        port_rets.index = pd.to_datetime(port_rets.index).strftime("%Y-%m-%d")
+        
+        return port_weights, port_asset_rets, port_rets
 
 
