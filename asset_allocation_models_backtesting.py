@@ -17,12 +17,12 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import quantstats as qs
 
 from scipy.stats import norm
 from scipy.optimize import minimize
 
-import quantstats as qs
-import yfinance as yf
+from yfinance_data_load import g
 
 
 # -
