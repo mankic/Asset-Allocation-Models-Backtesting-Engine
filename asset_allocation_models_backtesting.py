@@ -234,5 +234,22 @@ class AssetAllocationBacktesting:
             weights[weights > 1] = 1
             
             return weights
+        
+    def transaction_cost(self, weights_df, rets_df, cost=0.0005):
+        """
+        Transaction costs are calculated using the compound rate of return method, assuming reinvestment.
+        
+        :param weights_df: Weights dataframe of portfolio.
+        :param rets_df: Returns dataframe of portfolio.
+        :param cost: Transaction cost per unit.
+        :return: Transaction cost dataframe.
+        """
+        prev_weights_df = (weights_df.shift().fillna(0) * (1 + rets_df.iloc[self.period - 1:, :])) \
+        .div((weights_df.shift().fillna(0) * (1 + rets_df.iloc[self.period - 1:, :])).sum(axis=1), axis=0)
+        
+        cost_df = abs(weights_df - prev_weights_df) * cost
+        cost_df.fillna(0, inplace=True)
+        
+        return cost_df
 
 
