@@ -304,5 +304,42 @@ class AssetAllocationBacktesting:
         port_rets.index = pd.to_datetime(port_rets.index).strftime("%Y-%m-%d")
         
         return port_weights, port_asset_rets, port_rets
+    
+    def performance_analytics(self, port_weights, port_asset_rets, port_rets, qs_report=False):
+        """
+        Visualize backtesting results. And if (qs_report == True), you can get Quantstats' performance analysis report.
+        """
+        
+        # Investment weight by asset
+        plt.figure(figsize=(12, 7))
+        port_weights['Cash'] = 1 - port_weights.sum(axis=1)
+        plt.stackplot(port_weights.index, port_weights.T, labels=port_weights.columns)
+        plt.title('Portfolio Weights')
+        plt.xlabel('Date')
+        plt.ylabel('Weights')
+        plt.legend(loc='upper left')
+        plt.show()
+
+        # Cumulative return by asset
+        plt.figure(figsize=(12, 7))
+        plt.plot((1 + port_asset_rets).cumprod() - 1)
+        plt.title('Underlying Asset Performance')
+        plt.xlabel('Date')
+        plt.ylabel('Returns')
+        plt.legend(port_asset_rets.columns, loc='upper left')
+        plt.show()
+
+        # Portfolio cumulative return
+        plt.figure(figsize=(12, 7))
+        plt.plot((1 + port_rets).cumprod() - 1)
+        plt.title('Portfolio Performance')
+        plt.xlabel('Date')
+        plt.ylabel('Returns')
+        plt.show()
+
+        # Get QuantStats performance analysis report
+        if qs_report == True:
+            port_rets.index = pd.to_datetime(port_rets.index)
+            qs.reports.html(port_rets, output='./file-name.html')
 
 
