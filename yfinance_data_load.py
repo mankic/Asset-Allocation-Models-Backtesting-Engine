@@ -30,5 +30,6 @@ def get_etf_price_data():
     data.drop(['Open', 'High', 'Low', 'Volume'], inplace=True, axis=1)
     data = data.droplevel(0, axis=1)
     data.ffill(inplace=True)
-    
+    data = data.resample('W').last().iloc[:-1]
+
     return data

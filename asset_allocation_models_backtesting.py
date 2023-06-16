@@ -22,7 +22,7 @@ import quantstats as qs
 from scipy.stats import norm
 from scipy.optimize import minimize
 
-from yfinance_data_load import g
+from yfinance_data_load import get_etf_price_data
 
 
 # -
@@ -35,21 +35,21 @@ class AssetAllocationBacktesting:
     :param period: Period for annualization.
     """
     
-    def __init__(self, price_df, period=252):
+    def __init__(self, price, period=52):
         
         self.period = period
         
         # Returns data
-        self.rets = price_df.pct_change().dropna()
+        self.rets = price.pct_change().dropna()
         
         # Expected returns
-        self.er = np.array(self.rets * self.period)
+        self.er = np.array(self.rets.iloc[self.period - 1:, :] * self.period)
         
         # Volatility
-        self.vol = np.array(self.rets.rolling(self.period).std() * np.sqrt(self.period))
+        self.vol = np.array(self.rets.rolling(self.period).std().dropna() * np.sqrt(self.period))
         
         # Covarience Matrix
-        cov = self.rets.rolling(self.period).cov() * self.period
+        cov = self.rets.rolling(self.period).cov().dropna() * self.period
         self.cov = cov.values.reshape(int(cov.shape[0]/cov.shape[1]), cov.shape[1], cov.shape[1])
         
         # Transaction Cost
@@ -213,7 +213,7 @@ class AssetAllocationBacktesting:
             weights = (vol_target / vol).replace([np.inf, -np.inf], 0).shift().fillna(0)
             weights[weights > 1] = 1
             
-            return weigths
+            return weights
         
         def cvt(self, port_rets, period, delta=0.01, cvar_target=0.05):
             """
@@ -226,10 +226,10 @@ class AssetAllocationBacktesting:
             :return: Portfolio weights
             """
             def calculate_CVaR(rets, delta=0.01):
-                VaR = rets.quatile(delta)
+                VaR = rets.quantile(delta)
                 return rets[rets <= VaR].mean()
             
-            rolling_CVaR = - port_rets.rolling(period).apply(calculate_CVaR, args=(delta)).fillna(0)
+            rolling_CVaR = - port_rets.rolling(period).apply(calculate_CVaR, args=(delta,)).fillna(0)
             weights = (cvar_target / rolling_CVaR).replace([np.inf, -np.inf], 0).shift().fillna(0)
             weights[weights > 1] = 1
             
@@ -293,15 +293,15 @@ class AssetAllocationBacktesting:
             ts_weights = 1
         
         # Portfolio investment weights
-        port_weights = cs_weight.multiply(ts_weights, axis=0)
+        port_weights = cs_weights.multiply(ts_weights, axis=0)
         
         # Transaction cost
         cost = self.transaction_cost(port_weights, rets)
         
         # Portfolio Returns
-        port_asset_rets = port_weights.shift() * rets - cost
+        port_asset_rets = port_weights.shift() * rets.iloc[self.period - 1:, :] - cost
         port_rets = port_asset_rets.sum(axis=1)
-        port_rets.index = pd.to_datetime(port_rets.index).strftime("%Y-%m-%d")
+        port_rets.index = pd.to_datetime(port_rets.index)
         
         return port_weights, port_asset_rets, port_rets
     
@@ -339,7 +339,4 @@ class AssetAllocationBacktesting:
 
         # Get QuantStats performance analysis report
         if qs_report == True:
-            port_rets.index = pd.to_datetime(port_rets.index)
             qs.reports.html(port_rets, output='./file-name.html')
-
-
