@@ -125,19 +125,15 @@
   
 ```python
 # 포트폴리오 객체 생성
-etf_df = AssetAllocationBacktest(df)
+etf_portfolio = AssetAllocationBacktest(df)
 
   
 # 백테스트 실행, 결과 저장
-rp_vt_portfolio = etf_df.run(cs_model='RP', ts_model='VT', cost=0.0005)
+rp_vt_model = etf_df.run(cs_model='RP', ts_model='VT', cost=0.0005)
 
-port_weights = rp_vt_portfolio[0]
-port_asset_rets = rp_vt_portfolio[1]
-port_rets = rp_vt_portfolio[2]
   
-
 # 백테스팅 결과 시각화
-rp_vt_portfolio.performance_analytics(port_weights, port_asset_rets, port_rets, qs_report=True)
+etf_portfolio.performance_analytics(*rp_vt_model, qs_report=True)
 ```  
   
   <h3>4. 결과 시각화</h3>  
@@ -149,9 +145,9 @@ rp_vt_portfolio.performance_analytics(port_weights, port_asset_rets, port_rets, 
   
   <h3>5. QuantStats 결과</h3>  
   <p>
-  <img width="40%" height="300px" src="https://github.com/mankic/Asset-Allocation-Models-Backtesting-Engine/assets/104434422/c4cfabdf-d572-4873-a3ec-01217bccfe77"></img>  
-  <img width="40%" height="300px" src="https://github.com/mankic/Asset-Allocation-Models-Backtesting-Engine/assets/104434422/8d8acf7a-a2c9-4e73-8ceb-ed97e5ef6fcb"></img>  
-  <img width="40%" height="300px" src="https://github.com/mankic/Asset-Allocation-Models-Backtesting-Engine/assets/104434422/01d9e0ed-ccb9-43c4-b949-f32e1efdd0b6"></img>  
-  <img width="40%" height="300px" src="https://github.com/mankic/Asset-Allocation-Models-Backtesting-Engine/assets/104434422/2cb10b31-aaa6-4451-9c1d-bcf0c3f6b5c4"></img>  
+  <img width="40%" height="40%" src="https://github.com/mankic/Asset-Allocation-Models-Backtesting-Engine/assets/104434422/c4cfabdf-d572-4873-a3ec-01217bccfe77"></img>  
+  <img width="40%" height="40%" src="https://github.com/mankic/Asset-Allocation-Models-Backtesting-Engine/assets/104434422/8d8acf7a-a2c9-4e73-8ceb-ed97e5ef6fcb"></img>  
+  <img width="40%" height="40%" src="https://github.com/mankic/Asset-Allocation-Models-Backtesting-Engine/assets/104434422/01d9e0ed-ccb9-43c4-b949-f32e1efdd0b6"></img>  
+  <img width="40%" height="40%" src="https://github.com/mankic/Asset-Allocation-Models-Backtesting-Engine/assets/104434422/2cb10b31-aaa6-4451-9c1d-bcf0c3f6b5c4"></img>  
   </p>
 </details>  
