@@ -27,9 +27,9 @@ from yfinance_data_load import get_etf_price_data
 
 # -
 
-class AssetAllocationBacktesting:
+class AssetAllocationBacktest:
     """
-    A class for backtesting asset allocation model and present portfolio performance.
+        A class for backtesting asset allocation model and present portfolio performance.
     
     :param price_df: Historical price dataframe.
     :param period: Period for annualization.
@@ -51,10 +51,7 @@ class AssetAllocationBacktesting:
         # Covarience Matrix
         cov = self.rets.rolling(self.period).cov().dropna() * self.period
         self.cov = cov.values.reshape(int(cov.shape[0]/cov.shape[1]), cov.shape[1], cov.shape[1])
-        
-        # Transaction Cost
-        self.cost = 0.0005
-        
+                
         
     class CrossSectional:
         """
@@ -195,7 +192,7 @@ class AssetAllocationBacktesting:
             return weights
         
         
-    class PortRiskFreeWeights:
+    class PortWeights:
         """
         Dynamically balances between portfolio and risk-free assets to manage overall portfolio risk.
         """
@@ -235,7 +232,7 @@ class AssetAllocationBacktesting:
             
             return weights
         
-    def transaction_cost(self, weights_df, rets_df, cost=0.0005):
+    def transaction_cost(self, weights_df, rets_df, cost):
         """
         Transaction costs are calculated using the compound rate of return method, assuming reinvestment.
         
@@ -252,7 +249,7 @@ class AssetAllocationBacktesting:
         
         return cost_df
     
-    def run(self, cs_model, ts_model, cost):
+    def run(self, cs_model, ts_model, cost=0.0005):
         """
         Execute portfolio backtesting.
         :param cs_model: Choose the asset allocation model you want.
@@ -286,9 +283,9 @@ class AssetAllocationBacktesting:
         
         # Execute the selected portfolio weight model.
         if ts_model == 'VT':
-            ts_weights = (self.PortRiskFreeWeights().vt(cs_port_rets, self.period))
+            ts_weights = (self.PortWeights().vt(cs_port_rets, self.period))
         elif ts_model == 'CVT':
-            ts_weights = (self.PortRiskFreeWeights().cvt(cs_port_rets, self.period))
+            ts_weights = (self.PortWeights().cvt(cs_port_rets, self.period))
         elif ts_model == None:
             ts_weights = 1
         
@@ -296,10 +293,10 @@ class AssetAllocationBacktesting:
         port_weights = cs_weights.multiply(ts_weights, axis=0)
         
         # Transaction cost
-        cost = self.transaction_cost(port_weights, rets)
+        cost_df = self.transaction_cost(port_weights, rets, cost)
         
         # Portfolio Returns
-        port_asset_rets = port_weights.shift() * rets.iloc[self.period - 1:, :] - cost
+        port_asset_rets = port_weights.shift() * rets.iloc[self.period - 1:, :] - cost_df
         port_rets = port_asset_rets.sum(axis=1)
         port_rets.index = pd.to_datetime(port_rets.index)
         
